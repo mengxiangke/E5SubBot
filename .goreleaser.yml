@@ -8,14 +8,26 @@ builds:
     goos:
       - linux
       - windows
+      - darwin
     goarch:
       - 386
       - amd64
       - arm
       - arm64
     goarm:
-      - 6
-      - 7
+        - 6
+        - 7
+    ignore:
+      - goos: windows
+        goarch: 386
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
+      - goos: darwin
+        goarch: arm
+      - goos: darwin
+        goarch: 386
 checksum:
   name_template: '{{ .ProjectName }}_checksums.txt'
 archives:
@@ -37,8 +49,22 @@ archives:
 snapshot:
   name_template: "{{ .Tag }}-next"
 changelog:
+  use: github
   sort: asc
-  filters:
-    exclude:
-      - '^docs:'
-      - '^test:'
+  groups:
+    - title: New Features
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: 'Documentation updates'
+      regexp: "^.*docs[(\\w)]*:+.*$"
+      order: 2
+    - title: 'Refactoring'
+      regexp: "^.*refactor[(\\w)]*:+.*$"
+      order: 3
+    - title: Others
+      order: 4
+release:
+  draft: true

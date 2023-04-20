@@ -22,33 +22,13 @@ const (
 `
 )
 
-var (
-	BotToken      string
-	Socks5        string
-	BindMaxNum    int
-	MaxGoroutines int
-	MaxErrTimes   int
-	Cron          string
-	Notice        string
-	Admins        []int64
-	Mysql         MysqlConfig
-)
+func Init() {
 
-type MysqlConfig struct {
-	Host     string
-	Port     int
-	User     string
-	Password string
-	DB       string
-	Table    string
-}
-
-func InitConfig() {
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
-	if err != nil {
-		zap.S().Errorw("failed to read config", "error", err)
+
+	if err := viper.ReadInConfig(); err != nil {
+		zap.S().Fatalw("failed to read config", "error", err)
 	}
 	BotToken = viper.GetString("bot_token")
 	Cron = viper.GetString("cron")
@@ -64,15 +44,26 @@ func InitConfig() {
 
 	MaxGoroutines = viper.GetInt("goroutine")
 	Admins = getAdmins()
+	DB = viper.GetString("db")
+	Table = viper.GetString("table")
 
-	Mysql = MysqlConfig{
-		Host:     viper.GetString("mysql.host"),
-		Port:     viper.GetInt("mysql.port"),
-		User:     viper.GetString("mysql.user"),
-		Password: viper.GetString("mysql.password"),
-		DB:       viper.GetString("mysql.database"),
-		Table:    viper.GetString("mysql.table"),
+	switch DB {
+	case "mysql":
+		Mysql = mysqlConfig{
+			Host:                viper.GetString("mysql.host"),
+			Port:                viper.GetInt("mysql.port"),
+			User:                viper.GetString("mysql.user"),
+			Password:            viper.GetString("mysql.password"),
+			DB:                  viper.GetString("mysql.database"),
+			SSLMode:             viper.GetString("mysql.ssl_mode"),
+			EnabledTLSProtocols: viper.GetString("mysql.enabled_tls_protocols"),
+		}
+	case "sqlite":
+		Sqlite = sqliteConfig{
+			DB: viper.GetString("sqlite.db"),
+		}
 	}
+
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		MaxGoroutines = viper.GetInt("goroutine")
